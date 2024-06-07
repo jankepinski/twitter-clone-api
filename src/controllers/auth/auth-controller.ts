@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { prisma } from "../..";
 import { generateToken } from "../../utils/token";
 import bcrypt from "bcrypt";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { prisma } from "../../setup/prisma";
 
 const AuthController = {
   async register(req: Request, res: Response) {

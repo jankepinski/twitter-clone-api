@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "@prisma/client";
-import { prisma } from "..";
+import { prisma } from "../setup/prisma";
 
 const getUserMiddleware = async (
   req: Request,
