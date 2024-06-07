@@ -1,22 +1,89 @@
 import { Request, Response } from "express";
+import { prisma } from "../../setup/prisma";
 
 const PostsController = {
   async getPosts(req: Request, res: Response) {
-    const { user } = req;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
-    res.send("Get all posts");
+    const posts = await prisma.post.findMany({
+      where: {
+        parentId: null,
+      },
+    });
+    res.json(posts);
   },
   async getPost(req: Request, res: Response) {
-    res.send("Get a post");
+    const { id } = req.params;
+    const post = await prisma.post.findUnique({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    res.json(post);
   },
   async createPost(req: Request, res: Response) {
-    res.send("Create a post");
+    const { content, parentId } = req.body;
+    const { user } = req;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    if (!content)
+      return res.status(400).json({ error: "Missing content field" });
+    try {
+      const post = await prisma.post.create({
+        data: {
+          content,
+          authorId: user.id,
+          parentId: parentId ? parseInt(parentId) : null,
+        },
+      });
+
+      res.json(post);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
   },
   async updatePost(req: Request, res: Response) {
-    res.send("Update a post");
+    const { user } = req;
+    const { id } = req.params;
+    const { content } = req.body;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    if (!content)
+      return res.status(400).json({ error: "Missing content field" });
+    const post = await prisma.post.findUnique({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (post.authorId !== user.id)
+      return res.status(403).json({ error: "Forbidden" });
+    const updatedPost = await prisma.post.update({
+      where: {
+        id: parseInt(id),
+      },
+      data: {
+        content,
+      },
+    });
+    res.json(updatedPost);
   },
+
   async deletePost(req: Request, res: Response) {
-    res.send("Delete a post");
+    const { user } = req;
+    const { id } = req.params;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const post = await prisma.post.findUnique({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (post.authorId !== user.id)
+      return res.status(403).json({ error: "Forbidden" });
+    await prisma.post.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    res.json({ message: "Post deleted" });
   },
 };
 

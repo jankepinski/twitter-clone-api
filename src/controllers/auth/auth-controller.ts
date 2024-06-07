@@ -21,7 +21,7 @@ const AuthController = {
           token: generateToken(),
         },
       });
-      res
+      return res
         .cookie("accessToken", user.token, { httpOnly: true, secure: true })
         .json({
           name: user.name,
@@ -30,13 +30,12 @@ const AuthController = {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === "P2002") {
-          res
+          return res
             .status(409)
             .json({ error: "User with provided email already exists" });
-          return;
         }
       }
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
   },
   async login(req: Request, res: Response) {
@@ -52,22 +51,20 @@ const AuthController = {
         },
       });
       if (!user) {
-        res.status(401).json({ error: "Invalid email" });
-        return;
+        return res.status(401).json({ error: "Invalid email" });
       }
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        res.status(401).json({ error: "Invalid password" });
-        return;
+        return res.status(401).json({ error: "Invalid password" });
       }
-      res
+      return res
         .cookie("accessToken", user.token, { httpOnly: true, secure: true })
         .json({
           name: user.name,
           email: user.email,
         });
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
   },
 };
