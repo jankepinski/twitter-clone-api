@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../setup/prisma";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 const PostsController = {
   async getPosts(req: Request, res: Response) {
@@ -16,9 +17,35 @@ const PostsController = {
       where: {
         id: parseInt(id),
       },
+      include: {
+        children: {
+          include: { children: true },
+        },
+      },
     });
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
+  },
+  async getMyPosts(req: Request, res: Response) {
+    const { user } = req;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const posts = await prisma.post.findMany({
+      where: {
+        authorId: user.id,
+        parentId: null,
+      },
+    });
+    res.json(posts);
+  },
+  async getMyPostsAndReplies(req: Request, res: Response) {
+    const { user } = req;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const posts = await prisma.post.findMany({
+      where: {
+        authorId: user.id,
+      },
+    });
+    res.json(posts);
   },
   async createPost(req: Request, res: Response) {
     const { content, parentId } = req.body;
@@ -37,6 +64,11 @@ const PostsController = {
 
       res.json(post);
     } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === "P2003") {
+          return res.status(404).json({ error: "Parent post not found" });
+        }
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   },
