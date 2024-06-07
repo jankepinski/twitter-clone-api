@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import express from "express";
 import cors from "cors";
 import AuthRouter from "./routes/auth/auth-routes";
@@ -6,7 +5,6 @@ import cookieParser from "cookie-parser";
 import getUserMiddleware from "./middlewares/get-user-middleware";
 import PostsRouter from "./routes/posts/posts-routes";
 
-export const prisma = new PrismaClient();
 const app = express();
 
 app.use(
