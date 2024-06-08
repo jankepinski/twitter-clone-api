@@ -16,10 +16,25 @@ const PostsController = {
         },
       },
     });
-    res.json(posts);
+    res.json(
+      posts.map((post) => {
+        return {
+          ...post,
+          author: post.author.name,
+        };
+      })
+    );
   },
   async getPost(req: Request, res: Response) {
     const { id } = req.params;
+    const authorId = await prisma.post.findUnique({
+      where: {
+        id: parseInt(id),
+      },
+      select: {
+        authorId: true,
+      },
+    });
     const post = await prisma.post.findUnique({
       where: {
         id: parseInt(id),
@@ -27,7 +42,10 @@ const PostsController = {
       include: {
         children: {
           include: {
-            children: { include: { author: { select: { name: true } } } },
+            children: {
+              where: { authorId: authorId?.authorId },
+              include: { author: { select: { name: true } } },
+            },
             author: { select: { name: true } },
           },
         },
@@ -48,7 +66,22 @@ const PostsController = {
       },
     });
     if (!post) return res.status(404).json({ error: "Post not found" });
-    res.json(post);
+    res.json({
+      ...post,
+      author: post.author.name,
+      children: post.children.map((child) => {
+        return {
+          ...child,
+          author: child.author.name,
+          children: child.children.map((child) => {
+            return {
+              ...child,
+              author: child.author.name,
+            };
+          }),
+        };
+      }),
+    });
   },
   async getMyPosts(req: Request, res: Response) {
     const { user } = req;

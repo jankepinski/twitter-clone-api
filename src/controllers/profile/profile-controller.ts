@@ -4,19 +4,24 @@ import { prisma } from "../../setup/prisma";
 const ProfileController = {
   getProfile: async (req: Request, res: Response) => {
     const { id } = req.params;
-    const user = await prisma.user.findUnique({
+    const profile = await prisma.user.findUnique({
       where: {
         id: parseInt(id),
       },
-      include: {
+      select: {
+        name: true,
+        id: true,
         profile: true,
       },
     });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({
-      name: user.name,
-      profile: user.profile,
+    const aggregatedPosts = await prisma.post.aggregate({
+      where: {
+        authorId: parseInt(id),
+      },
+      _count: true,
     });
+
+    res.json({ ...profile, postCount: aggregatedPosts._count });
   },
   updateProfile: async (req: Request, res: Response) => {
     const { user } = req;

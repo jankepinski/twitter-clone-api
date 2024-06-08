@@ -19,6 +19,11 @@ const AuthController = {
           email,
           password: hashedPassword,
           token: generateToken(),
+          profile: {
+            create: {
+              bio: null,
+            },
+          },
         },
       });
       return res
