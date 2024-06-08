@@ -22,7 +22,11 @@ const AuthController = {
         },
       });
       return res
-        .cookie("accessToken", user.token, { httpOnly: true, secure: true })
+        .cookie("accessToken", user.token, {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+        })
         .json({
           name: user.name,
           email: user.email,
@@ -58,7 +62,11 @@ const AuthController = {
         return res.status(401).json({ error: "Invalid password" });
       }
       return res
-        .cookie("accessToken", user.token, { httpOnly: true, secure: true })
+        .cookie("accessToken", user.token, {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+        })
         .json({
           name: user.name,
           email: user.email,
@@ -66,6 +74,37 @@ const AuthController = {
     } catch (error) {
       return res.status(500).json({ error: "Internal server error" });
     }
+  },
+  async logout(req: Request, res: Response) {
+    return res
+      .clearCookie("accessToken", {
+        sameSite: "none",
+        secure: true,
+        httpOnly: true,
+      })
+      .json({ message: "Logged out" });
+  },
+  getMyProfile: async (req: Request, res: Response) => {
+    const { user } = req;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const profile = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      select: {
+        name: true,
+        id: true,
+        profile: true,
+      },
+    });
+    const aggregatedPosts = await prisma.post.aggregate({
+      where: {
+        authorId: user.id,
+      },
+      _count: true,
+    });
+
+    res.json({ ...profile, postCount: aggregatedPosts._count });
   },
 };
 

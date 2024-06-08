@@ -18,16 +18,6 @@ const ProfileController = {
       profile: user.profile,
     });
   },
-  getMyProfile: async (req: Request, res: Response) => {
-    const { user } = req;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
-    const profile = await prisma.profile.findUnique({
-      where: {
-        userId: user.id,
-      },
-    });
-    res.json({ name: user.name, profile });
-  },
   updateProfile: async (req: Request, res: Response) => {
     const { user } = req;
     if (!user) return res.status(401).json({ error: "Unauthorized" });

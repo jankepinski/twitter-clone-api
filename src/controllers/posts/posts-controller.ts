@@ -8,6 +8,13 @@ const PostsController = {
       where: {
         parentId: null,
       },
+      include: {
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
     res.json(posts);
   },
@@ -19,7 +26,24 @@ const PostsController = {
       },
       include: {
         children: {
-          include: { children: true },
+          include: {
+            children: { include: { author: { select: { name: true } } } },
+            author: { select: { name: true } },
+          },
+        },
+        author: {
+          select: {
+            name: true,
+          },
+        },
+        parent: {
+          select: {
+            authorId: true,
+            content: true,
+            author: {
+              select: { name: true },
+            },
+          },
         },
       },
     });
